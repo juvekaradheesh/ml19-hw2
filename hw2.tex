@@ -1,0 +1,148 @@
+\documentclass[10pt]{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{ulem}
+\usepackage{framed}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{subfigure}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage[capitalise,noabbrev]{cleveref}
+\usepackage[usenames,dvipsnames]{xcolor}
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage[letterpaper, margin=1in]{geometry}
+
+
+\renewcommand{\familydefault}{ppl}
+
+\newcommand{\bx}{{\boldsymbol x}}
+\newcommand{\bw}{{\boldsymbol w}}
+\newcommand{\bmu}{{\boldsymbol \mu}}
+\newcommand{\bbeta}{{\boldsymbol \beta}}
+\newcommand{\btheta}{{\boldsymbol \theta}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\solution}[1]{{\color{PineGreen} \textbf{Solution:} #1}}
+
+\newcommand{\todo}[1]{\textbf{\textcolor{MidnightBlue}{to do: #1}} }
+
+\begin{document}
+
+\section*{Machine Learning Spring 2019 Homework 2}
+
+Homework must be submitted electronically on Canvas. Make sure to explain you reasoning or show your derivations. Except for answers that are especially straightforward, you will lose points for unjustified answers, even if they are correct. 
+
+\section*{General Instructions}
+
+You are allowed to work with at most one other student on the homework. With your partner, you will submit only one copy, and you will share the grade that your submission receives. You should set up your partnership on Canvas as a two-person group. 
+
+Submit your homework electronically on Canvas. We recommend using LaTeX, especially for the written problems. But you are welcome to use anything as long as it is neat and readable. 
+
+Since we may work on some of the homework in class, clearly indicate which parts of your submitted homework are work done in class and which are your own work. 
+
+Relatedly, cite all outside sources of information and ideas. 
+
+\section*{Written Problems}
+
+\begin{enumerate}
+
+\item Multiclass logistic regression has the form
+\begin{align}
+p(y | \bx; W) := \frac{\exp(\bw_y^\top \bx)}{\sum_{c = 1}^C \exp(\bw_c^\top \bx)} ~,
+\label{eq:mclogistic} 
+\end{align}
+where $W$ is a set of weight vectors $\{\bw_1, \ldots, \bw_C\}$ for each class. 
+
+\begin{enumerate}
+
+\item (5 points) You have a batch of $n$ data points and labels $\{(\bx_1, y_1), \ldots, (\bx_n, y_n)\}$. Write the conditional log-likelihood of the labels given the features and simplify it. Show and explain the steps you take to simplify the expression. You should end up with an expression very similar to \cref{eq:nll}.
+
+\item (5 points) Derive the gradient of the logistic regression likelihood with respect to any one of the $\bw_c$ vectors. It should look very similar to \cref{eq:lrgrad} or \cref{eq:simplified-lrgrad} below (either form is acceptable for full credit). Show and explain the steps you take to derive the gradient.
+
+\item (5 points) We often add a regularizer (as we do below for the programming portion) that penalizes the magnitude of the weight vectors. These regularizers ``prefer'' the weights to be the all-zeros vector. What is the estimated probability of this all-zeros solution? Explain in one to three sentences why this probability is reasonable as the maximally regularized solution.
+
+\end{enumerate}
+
+\end{enumerate}
+
+\section*{Programming Assignment}
+
+For this assignment, you will run an experiment comparing two different versions of linear classifiers for multiclass classification. 
+
+\subsection*{Models}
+
+The two models you will implement are perceptron and logistic regression. The multiclass forms of these models are summarized here.
+
+\paragraph{Multiclass Perceptron} The multiclass perceptron uses a weight vector for each class, which can conveniently be represented with a matrix $W = \{\bw_1, \ldots, \bw_C\}$. The prediction function is
+\begin{align}
+f_{\mathrm{perc}}(\bx) := \argmax_{c \in \{1, \ldots, C\}} \bw_c^\top \bx = \argmax_{c \in \{1, \ldots, C\}} \left[ W^\top \bx \right]_{c}.
+\end{align}
+The multiclass perceptron update rule when learning from example $\bx_t$, ground-truth label $y_t$ is.
+\begin{align}
+\bw_{y_t} &\leftarrow \bw_{y_t} + \bx_t\\
+\bw_{\left(f_{\mathrm{perc}}(\bx)\right)} &\leftarrow \bw_{\left(f_{\mathrm{perc}}(\bx)\right)} - \bx_t
+\end{align}
+
+\paragraph{Multiclass Logistic Regression} Multiclass logistic regression also uses a weight vector for each class, and in fact has the same prediction formula as perceptron.
+\begin{align}
+f_{\mathrm{lr}}(\bx) := \argmax_{c \in \{1, \ldots, C\}} \bw_c^\top \bx = \argmax_{c \in \{1, \ldots, C\}} \left[ W^\top \bx \right]_{c}.
+\end{align}
+The key difference from perceptron is that it is built around a probabilistic interpretation:
+\begin{align}
+p_{\mathrm{lr}}(y | \bx; W) := \frac{\exp(\bw_y^\top \bx)}{\sum_{c = 1}^C \exp(\bw_c^\top \bx)} ~ .
+\end{align}
+For data set $D = \{(\bx_1, y_1), \ldots, (\bx_n, y_n)\}$, the regularized negative log likelihood is
+\begin{align}
+L(D) &= \frac{\lambda}{2} ||W||^2_{\textrm{F}} + \sum_{i=1}^n \log \left(\sum_{c} \exp(\bw_{c}^\top \bx_i)\right) - \sum_{i = 1}^n \bw_{y_i}^\top \bx_i 
+\label{eq:nll}
+\end{align}
+where $||W||^2_{\textrm{F}}$ is the squared Frobenius norm $\sum_{ij} \bw_i[j]^2$, 
+and the gradient of the log likelihood is
+\begin{align}
+\nabla_{\bw_c} L &= \lambda \bw_c + \sum_{i = 1}^n  \bx_i \left(\frac{\exp(\bw_{c}^\top \bx_i)}{\sum_{c'} \exp(\bw_{c'}^\top \bx_i)} - I(y_i = c) \right) \label{eq:lrgrad}
+\\
+ &= \lambda \bw_c + \sum_{i = 1}^n  \bx_i \left(p_{\textrm{lr}}(y = c | \bx_i; W) - I(y_i = c) \right)
+ \label{eq:simplified-lrgrad}
+\end{align}
+
+\subsection*{Experiments}
+
+You'll build learning and prediction functions for perceptron and linear regression. You should be able to run an experiment on synthetic data, which will be possible to visualize on the screen, and on real medical data. These experiments are already set up for you in the two iPython notebooks: \texttt{synthetic\_experiments.ipynb} and \texttt{cardio\_experiments.ipynb}. The cardiotocography data includes measurements from fetal cardiotocograms that medical experts diagnosed into ten possible diagnosis classes.\footnote{\url{https://archive.ics.uci.edu/ml/datasets/Cardiotocography}} Both experiments will measure how the perceptron model behavior changes as it sees more examples and how logistic regression behaves as you vary its regularization parameter. 
+
+\subsection*{Tasks}
+
+\begin{enumerate}
+
+\item (4 points) You should only need to modify \texttt{linearclassifier.py}, which has three unfinished functions. The first function you should finish is \texttt{linear\_predict}, which takes a set of data and a model object as input and outputs the predicted labels for each example. This linear prediction should be done with matrix operations and should take approximately two to five lines of code. This function will be used as the predictor function for both learning algorithms. 
+
+The \texttt{model} is a \texttt{dict} that contains only one entry. The key is \texttt{'weights'}, and the value is the weight matrix for the multi-class linear classifier. 
+
+\item (4 points) Implement \texttt{perceptron\_update}, which should run one perceptron learning step. It receives as input \textbf{one} example and its label and modifies the \texttt{model} object in place. In other words, the function should change the weights of the \texttt{model} dictionary to the new weights after applying the perceptron equations. Finally, the function should return whether the perceptron was correct on the given example.
+
+Your \texttt{perceptron\_update} function should update the numpy matrix stored in \texttt{model['weights']} \textit{in-place}. This in-place update can be done by directly setting the values of certain columns of the matrix. For example, if you want to set the values of the \texttt{i}th column of the matrix equal to the values in a vector \texttt{new\_vector}, the command is
+\begin{verbatim}
+model['weights'][:, i] = new_vector
+\end{verbatim}
+
+Once you complete this task, you should be able to run the perceptron experiments. The notebooks should generate plots of the training and testing accuracy as you run multiple epochs of online learning.
+
+\item (7 points) Implement \texttt{log\_reg\_nll} (short for \textit{logistic regression negative log-likelihood}), which is a function defined inside \texttt{log\_reg\_train} (short for \textit{logistic regression train}). The function \texttt{log\_reg\_nll} returns a length-two tuple containing (1) the value of the negative log-likelihood---i.e., \cref{eq:nll}---and (2) the gradient of the negative log-likelihood with respect to the model weights---i.e., \cref{eq:simplified-lrgrad}. 
+
+The first cell of the logistic regression portion in each notebook tests whether your objective function and gradient agree with each other by comparing your provided gradient with a numerically estimated gradient of your objective function. Use that to validate that you implemented the function correctly. 
+
+Make sure to read and understand the other code in \texttt{log\_reg\_train}, which uses the function and gradient you compute and passes it into a general purpose numerical optimization tool to perform gradient-based minimization of the learning objective. You technically won't be graded on your understanding of this part for this homework, but it's an important concept in machine learning that will come up again.
+
+Once you complete this task, you should be able to run the logistic regression experiment. The notebooks should plot the training and testing accuracy as the regularization parameter $\lambda$ changes. 
+
+\end{enumerate}
+
+
+\end{document}
+
+
