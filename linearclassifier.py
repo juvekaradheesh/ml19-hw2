@@ -52,6 +52,9 @@ def log_reg_train(data, labels, params, model=None, check_gradient=False):
     :param model: dictionary containing 'weights' key. The value for the 'weights' key is a size 
                     (d, num_classes) ndarray
     :type model: dict
+    :param check_gradient: Boolean value indicating whether to run the numerical gradient check, which will skip
+                            learning after checking the gradient on the initial model weights.
+    :type check_gradient: Boolean
     :return: the learned model 
     :rtype: dict
     """
@@ -84,7 +87,7 @@ def log_reg_train(data, labels, params, model=None, check_gradient=False):
 
     if check_gradient:
         grad_error = check_grad(lambda w: log_reg_nll(w)[0], lambda w: log_reg_nll(w)[1].ravel(), weights)
-        print("Provided gradient differed from numerical approximation by %e (should be below 1e-3)" % grad_error)
+        print("Provided gradient differed from numerical approximation by %e (should be around 1e-3 or less)" % grad_error)
         return model
 
     # pass the internal objective function into the optimizer
@@ -122,7 +125,7 @@ def plot_predictions(data, labels, predictions):
                  markers[i] + 'r')
 
 
-def logsumexp(matrix, dim = None):
+def logsumexp(matrix, dim=None):
     """
     Compute log(sum(exp(matrix), dim)) in a numerically stable way.
     
