@@ -73,7 +73,7 @@ def log_reg_train(data, labels, params, model=None, check_gradient=False):
         :param new_weights: weights to use for computing logistic regression likelihood
         :type new_weights: ndarray
         :return: tuple containing (<negative log likelihood of data>, gradient)
-        :rtype: float
+        :rtype: tuple
         """
         # reshape the weights, which the optimizer prefers to be a vector, to the more convenient matrix form
         new_weights = new_weights.reshape((d, num_classes))

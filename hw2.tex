@@ -142,6 +142,27 @@ Make sure to read and understand the other code in \texttt{log\_reg\_train}, whi
 
 Once you complete this task, you should be able to run the logistic regression experiment. The notebooks should plot the training and testing accuracy as the regularization parameter $\lambda$ changes. 
 
+\paragraph{Note on preventing numerical overflow} 
+
+In some cases, when you try to calculate 
+$\frac{\exp(s_i)}{\sum_{j} \exp(s_j)}$,
+one or more of the $\exp$ operations may overflow. Here are two ways to handle this:
+
+\begin{enumerate}
+
+\item You can subtract a constant from each of the scores. Let $a$ be some constant. Then mathematically, $\frac{\exp(s_i)}{\sum_j \exp(s_j)} \equiv \frac{\exp(s_i - a)}{\sum_j \exp(s_j - a)}$. If you use this method, a good choice for $a$ is $a = \max_i s_i$ because then the maximum value of all the 
+$\exp(s_i - a) = \exp(0) = 1$,
+and you can be sure that none of these overflow. (Some may underflow, but that's okay.)
+
+\item Another approach is to take advantage of the fact that I gave you the logsumexp function (which basically does something very similar to option (a). You can calculate the whole fraction in log space. Taking the log of the expression, you get 
+\[
+\log \left( \frac{\exp(s_i)}{\sum_j \exp(s_j)} \right) = \log \exp(s_i) - \log \left(\sum_j \exp(s_j)\right) = s_i - \textrm{logsumexp}({\boldsymbol s}),
+\] 
+where the last expression is the logsumexp operation run on the full vector ${\boldsymbol s} = [	s_1, \ldots, s_C]$.
+
+Overflow should only really happen if the weights or features are too large in magnitude. Sometimes the optimization may explore weight values that are too large, so having these tricks to prevent overflow can be helpful, but other times the optimization never tries these large values, so adding them just overcomplicates your code.
+\end{enumerate}
+
 \end{enumerate}
 
 
