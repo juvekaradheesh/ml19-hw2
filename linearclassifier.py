@@ -18,8 +18,12 @@ def linear_predict(data, model):
     :return: length n vector of class predictions
     :rtype: array
     """
-    # TODO fill in your code to predict the class by finding the highest scoring linear combination of features
 
+    # This function does the prediction by doing matrix multiplication
+    # Transpose(weight matrix) x data
+
+    return np.argmax(np.matmul(model['weights'].T,data), axis=0)
+    
 
 def perceptron_update(data, model, label):
     """
@@ -35,8 +39,18 @@ def perceptron_update(data, model, label):
     :return: whether the perceptron correctly predicted the provided true label of the example
     :rtype: bool
     """
-    # TODO fill in your code here to implement the perceptron update, directly updating the model dict
-    # and returning the proper boolean value
+
+    # Get prediction by multiplying weights with transpose of data
+    idx_pred = np.argmax(np.matmul(model['weights'].T,data),axis=0)
+
+    # Update the weights if the predicted value is not same as the label class
+    if idx_pred!=label:
+
+        model['weights'][:, label] = model['weights'][:, label] + data
+        model['weights'][:, idx_pred] = model['weights'][:, idx_pred] - data
+        return False
+    
+    return True
 
 
 def log_reg_train(data, labels, params, model=None, check_gradient=False):
@@ -78,10 +92,27 @@ def log_reg_train(data, labels, params, model=None, check_gradient=False):
         # reshape the weights, which the optimizer prefers to be a vector, to the more convenient matrix form
         new_weights = new_weights.reshape((d, num_classes))
 
-        # TODO fill in your code here to compute the objective value (nll)
+        lambda_val = params['lambda']
+        new_weights_t = new_weights.transpose()
+        wt = np.dot(new_weights_t, data)
+        le = logsumexp(wt, 0)[0]
+        
+        nll_val = 0
+        
+        for i in range(n):
+            nll_val += np.dot(new_weights[:, labels[i]], data[:,i])
+        
+        nll =  np.sum((lambda_val * (new_weights * new_weights))/2) + le.sum() - nll_val
 
+        gradient = lambda_val * new_weights
 
-        # TODO fill in your code here to compute the gradient
+        for c in range(num_classes):
+            exp_p = np.exp(wt[c,:] - le)
+            log_p = np.tile(exp_p, (d, 1))
+            gradient[:, c] += np.multiply(log_p, data).sum(axis=1)
+            for i in range(n):
+                if labels[i] == c:
+                    gradient[:, c] -= data[:, i]
 
         return nll, gradient
 
